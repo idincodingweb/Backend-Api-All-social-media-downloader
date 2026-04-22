@@ -1,44 +1,81 @@
-// backend download all social media by idin code
+/**
+ * ============================================================
+ * NEXUS SAVER ENGINE v1.0
+ * Developed with Power & Passion by: Idin Iskandar, S.Kom
+ * 
+ * "Dibuat karna gpp pengen bikin aja anjir
+ * ============================================================
+ */
+
 export default async function handler(req, res) {
-  // 1. Handle CORS (Wajib biar Frontend React lo gak diblokir)
+  // Kasih restu biar Frontend React lo gak baper kena drama CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
-  }
+  // Urusan birokrasi request (Preflight), lalui aja biar cepet
+  if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // 2. Ambil URL video dari query parameter (ex: /api/download?url=...)
   const { url } = req.query;
 
+  // Validasi: Pastikan user gak ngasih link kosong kayak janji mantan
   if (!url) {
-    return res.status(400).json({ error: "Mana link videonya, Bos? 😆" });
+    return res.status(400).json({ 
+      error: "Mana link-nya, Senior Idin? Gak ada link, gak ada video! 😆" 
+    });
   }
 
-  try {
-    // 3. Konfigurasi Data untuk API (format x-www-form-urlencoded)
-    const formData = new URLSearchParams();
-    formData.append('url', url);
+  /**
+   * PASUKAN KUNCI RAHASIA BERGUNA UNTUK LO PENGGUNA API GRATISAN
+   * Strategi 'Cadangan di atas Cadangan'. Kalau satu tumbang, 
+   * yang lain siap tempur! Gak perlu bayar langganan premium! 😎💸
+   */
+  const API_KEYS = [
+    'API_KEY_PERTAMA_LO_CUY', // Kunci andalan 1
+    'API_KEY_CADANGAN_2',                                 // Kunci serep 2
+    'API_KEY_CADANGAN_3'                                  // Kunci darurat 3
+  ];
 
-    // 4. Tembak ke Snap Video API v3 (Spek dari lo)
-    const response = await fetch('https://snap-video3.p.rapidapi.com/download', {
-      method: 'POST',
-      headers: {
-        'x-rapidapi-key': '4e47b12293mshc3f65f7fe7805e5p1e21f3jsn311b011168eb',
-        'x-rapidapi-host': 'snap-video3.p.rapidapi.com',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: formData.toString()
-    });
+  // Logic 'Smart Failover' ala gw cuy pria tampan
+  for (let i = 0; i < API_KEYS.length; i++) {
+    const currentKey = API_KEYS[i];
+    
+    try {
+      // Siapkan amunisi data (Format x-www-form-urlencoded)
+      const formData = new URLSearchParams();
+      formData.append('url', url);
 
-    const data = await response.json();
+      // Saatnya beraksi! Tembak server RapidAPI pake peluru gw cuy
+      const response = await fetch('https://snap-video3.p.rapidapi.com/download', {
+        method: 'POST',
+        headers: {
+          'x-rapidapi-key': currentKey,
+          'x-rapidapi-host': 'snap-video3.p.rapidapi.com',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+      });
 
-    // 5. Kirim hasil balik ke React
-    return res.status(200).json(data);
+      // Kalau kena 'Limit Abis' (Error 429/403), gak usah panik...
+      if (response.status === 429 || response.status === 403) {
+        console.log(`Kunci ke-${i+1} udah capek, Senior Idin pindah ke mesin berikutnya...`);
+        continue; // Gas lagi pake kunci selanjutnya di loop!
+      }
 
-  } catch (error) {
-    console.error("API Error:", error);
-    return res.status(500).json({ error: "Gagal narik data. Pastikan link bener atau API Key masih ada jatah! 😅" });
+      const data = await response.json();
+      
+      // JEBRED! Data dapet, kirim balik ke markas (React)
+      return res.status(200).json(data);
+
+    } catch (error) {
+      console.error(`Error di mesin ke-${i+1}:`, error);
+      
+      // Kalau semua kunci udah dicoba tapi tetep zonk...
+      if (i === API_KEYS.length - 1) {
+        return res.status(500).json({ 
+          error: "Aduh Cok! Semua mesin cadangan lagi mogok masal. Coba lagi nanti! 😅" 
+        });
+      }
+    }
   }
 }
